@@ -1,26 +1,181 @@
-<script>
-    const width = 21;
-    const height = 21;
-    const maze = generateMaze(width, height);
-    const player = { x: 1, y: 1, element: null };
-
-    // (The rest of your maze generation and rendering code)
-
-    window.addEventListener('message', (event) => {
-        console.log('Received message:', event.data); // Log received messages
-        if (event.origin !== 'https://AlesahAlhazm.github.io') {
-            console.log('Unexpected origin:', event.origin); // Log unexpected origins
-            return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Game</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #eee;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
         }
 
-        const { direction } = event.data;
-        switch (direction) {
-            case 'up': movePlayer(0, -1); break;
-            case 'down': movePlayer(0, 1); break;
-            case 'left': movePlayer(-1, 0); break;
-            case 'right': movePlayer(1, 0); break;
+        .maze {
+            display: grid;
+            grid-template-columns: repeat(21, 30px);
+            gap: 3px;
+            justify-content: center;
+            margin-top: 20px;
         }
-    });
 
-    // (The rest of your code)
-</script>
+        .maze div {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+        }
+
+        .wall {
+            background: linear-gradient(135deg, #ff0066, #ff66cc);
+            border: 2px solid #ff33cc;
+            box-shadow: 0px 0px 20px #ff33cc;
+        }
+
+        .path {
+            background-color: #222;
+            box-shadow: inset 0 0 10px #444;
+        }
+
+        .character {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg.character-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0px 0px 10px yellow);
+        }
+
+        .destination {
+            background: radial-gradient(circle, rgba(0, 255, 255, 1) 0%, rgba(0, 128, 255, 1) 100%);
+            box-shadow: 0px 0px 25px 15px cyan;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+                box-shadow: 0px 0px 30px 15px cyan;
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Maze Game</h1>
+    <div id="maze" class="maze"></div>
+
+    <script>
+        const width = 21;
+        const height = 21;
+        const maze = generateMaze(width, height);
+        const player = { x: 1, y: 1, element: null };
+
+        function generateMaze(width, height) {
+            const maze = Array.from({ length: height }, () => Array(width).fill(1));
+            const directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+
+            function inBounds(x, y) {
+                return x >= 0 && x < width && y >= 0 && y < height;
+            }
+
+            function getNeighbors(x, y) {
+                return directions.map(([dx, dy]) => [x + dx, y + dy])
+                                 .filter(([nx, ny]) => inBounds(nx, ny) && maze[ny][nx] === 1);
+            }
+
+            function carve(x, y) {
+                maze[y][x] = 0;
+                const neighbors = getNeighbors(x, y);
+                neighbors.sort(() => Math.random() - 0.5);
+                
+                for (const [nx, ny] of neighbors) {
+                    if (maze[ny][nx] === 1) {
+                        maze[y + (ny - y) / 2][x + (nx - x) / 2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+
+            carve(1, 1);
+            maze[0][1] = 0;
+            maze[height - 1][width - 2] = 0;
+            maze[Math.floor(height / 2)][Math.floor(width / 2)] = 2;
+            
+            return maze;
+        }
+
+        function renderMaze(maze) {
+            const mazeDiv = document.getElementById('maze');
+            mazeDiv.innerHTML = '';
+
+            maze.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.classList.add(cell === 1 ? 'wall' : 'path');
+                    if (cell === 2) {
+                        cellDiv.classList.add('destination');
+                    }
+                    if (x === player.x && y === player.y) {
+                        cellDiv.classList.add('character');
+                        cellDiv.innerHTML = getCharacterSVG();
+                        player.element = cellDiv;
+                    }
+                    mazeDiv.appendChild(cellDiv);
+                });
+            });
+        }
+
+        function getCharacterSVG(color = 'yellow', strokeColor = 'orange') {
+            return `
+                <svg xmlns="http://www.w3.org/2000/svg" class="character-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" fill="${color}" stroke="${strokeColor}" stroke-width="5" />
+                    <circle cx="35" cy="35" r="10" fill="black" />
+                    <circle cx="65" cy="35" r="10" fill="black" />
+                </svg>
+            `;
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+
+            if (maze[newY][newX] !== 1) { // Ensure it's not a wall
+                player.x = newX;
+                player.y = newY;
+                renderMaze(maze);
+            }
+        }
+
+        window.addEventListener('message', (event) => {
+            console.log('Received message:', event.data); // Log received messages
+            if (event.origin !== 'https://AlesahAlhazm.github.io') {
+                console.log('Unexpected origin:', event.origin); // Log unexpected origins
+                return;
+            }
+
+            const { direction } = event.data;
+            switch (direction) {
+                case 'up': movePlayer(0, -1); break;
+                case 'down': movePlayer(0, 1); break;
+                case 'left': movePlayer(-1, 0); break;
+                case 'right': movePlayer(1, 0); break;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMaze(maze);
+        });
+    </script>
+</body>
+</html>
