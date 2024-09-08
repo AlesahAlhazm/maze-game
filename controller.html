@@ -1,20 +1,88 @@
-<script>
-    const mazeUrl = 'https://AlesahAlhazm.github.io/maze-game/index.html';
-    let mazeWindow = window.open(mazeUrl, 'MazeGame', 'width=800,height=800');
-
-    function sendDirection(direction) {
-        console.log('Sending direction:', direction); // Log sent directions
-        if (mazeWindow) {
-            mazeWindow.postMessage({ direction }, 'https://AlesahAlhazm.github.io'); // Match the origin
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Controller</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #eee;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
         }
-    }
 
-    window.addEventListener('keydown', (event) => {
-        switch (event.key) {
-            case 'ArrowUp': sendDirection('up'); break;
-            case 'ArrowDown': sendDirection('down'); break;
-            case 'ArrowLeft': sendDirection('left'); break;
-            case 'ArrowRight': sendDirection('right'); break;
+        .controller {
+            margin-top: 30px;
         }
-    });
-</script>
+
+        .controls {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .controls button {
+            width: 60px;
+            height: 60px;
+            font-size: 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .controls button:active {
+            background-color: #555;
+        }
+
+        h1 {
+            color: #ffcc00;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Maze Controller</h1>
+    <div class="instructions">
+        <p>Open the maze game on your PC or another browser window:</p>
+        <p><a href="https://AlesahAlhazm.github.io/maze-game/index.html" target="_blank" style="color: #ffcc00;">Open Maze Game</a></p>
+        <p>Use the controller below to control the game:</p>
+    </div>
+    <div class="controller">
+        <div class="controls">
+            <button onclick="sendDirection('up')">↑</button>
+            <button onclick="sendDirection('left')">←</button>
+            <button onclick="sendDirection('down')">↓</button>
+            <button onclick="sendDirection('right')">→</button>
+        </div>
+    </div>
+
+    <script>
+        function sendDirection(direction) {
+            console.log('Sending direction:', direction); // Log sent directions
+            if (window.opener) {
+                window.opener.postMessage({ direction }, 'https://AlesahAlhazm.github.io'); // Match the origin
+            }
+        }
+
+        window.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'ArrowUp': sendDirection('up'); break;
+                case 'ArrowDown': sendDirection('down'); break;
+                case 'ArrowLeft': sendDirection('left'); break;
+                case 'ArrowRight': sendDirection('right'); break;
+            }
+        });
+    </script>
+</body>
+</html>
