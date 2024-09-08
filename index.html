@@ -158,12 +158,12 @@
         }
 
         window.addEventListener('message', (event) => {
+            console.log('Received message:', event.data); // Debugging
             if (event.origin !== window.location.origin) {
                 return;
             }
 
             const { direction } = event.data;
-
             switch (direction) {
                 case 'up': movePlayer(0, -1); break;
                 case 'down': movePlayer(0, 1); break;
